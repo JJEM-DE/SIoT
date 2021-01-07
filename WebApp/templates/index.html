@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="../static/style.css" />
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script type="text/javascript">
+      var data = {{data}}
+    </script>
+    <title>Homepage</title>
+  </head>
+  <body>
+    <center style="max-width:750px; margin: auto; margin-top: 50px">
+      <h1>Josh Moody IoT web app</h1>
+      <p class="topbanner">Air quality data is collected directly by a Raspberry Pi and phone data is collected by the Raspberry Pi using MQTT. All data is then uploaded to a Google Spreadsheet, from which it is collected and processed before being presented on this page. All processes are automatic - refresh the page to get the latest data.
+      </p>
+    </center>
+
+
+    <div class="element">
+      <h2> Air Quality </h2>
+      <p> Air quality measurements taken in my bedroom. The plot shows sampling once every 4 minutes for PM2.5 and PM10 particulates. These are both inhalable particles, with diameters around 2.5 micrometers (eg. combusion particles) and 10 micrometers (eg. dust, pollen) respectively.</p>
+      <p class="instruction">Click and drag to zoom. Shift+click to pan.</p>
+    </div>
+
+
+
+    <div id="container" class="element" style="height:700px"></div>
+    <script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+        const chart = Highcharts.chart('container', {
+            chart: {
+                type: 'line',
+                zoomType: 'x',
+                panning: true,
+                panKey: 'shift'
+            },
+            title: {
+                text: 'Air Quality over time'
+            },
+            credits:{
+              enabled: false
+            },
+            xAxis: {
+                title: {
+                    text:'Time'
+                },
+                type: 'datetime'
+            },
+            yAxis: [{
+                title: {
+                    text: 'Amount of PM2.5'
+                },
+                type: 'linear'
+            },{
+                title: { 
+                    text: 'Amount of PM10'
+                },
+                type: 'linear',
+                opposite: true
+            }],
+            series: [{yAxis: 0, name: 'PM2.5', data: data[0]},{yAxis: 1, name:'PM10', data: data[1]}]
+        });
+    });
+    </script>
+
+
+
+
+
+
+    <div class="element" style="margin-top: 50px">
+    <h2> Phone gyroscope </h2>
+    <p> XYZ gyroscope readings from my Android phone. Sampling is done every couple of seconds. The magnitude of the readings is calulated and then plotted. From this data basic activities are identified: </p>
+    <ul>
+      <li> Stationary (phone sitting on fixed surface)</li>
+      <li> Light movement (phone either being used or in a pocket whilst sitting down)</li>
+      <li> Large movement (person walking or doing other activities with phone in pocket)</li>
+    </ul>
+    <p class="instruction">Click and drag to zoom. Shift+click to pan.</p>
+
+    </div>
+
+    <div id="container2" class="element" style="height:700px"></div>
+    <script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+        const chart2 = Highcharts.chart('container2', {
+            chart: {
+                type: 'column',
+                zoomType: 'x',
+                panning: true,
+                panKey: 'shift'
+            },
+            title: {
+                text: 'Gyroscope data over time'
+            },
+            credits:{
+              enabled: false
+            },
+            xAxis: {
+                title: {
+                    text:'Time'
+                },
+                type: 'datetime'
+            },
+            yAxis: {
+                title: {
+                    text: 'Gyroscope readings'
+                },
+                type: 'linear',
+                gridLineWidth: '0px',
+            },
+            plotOptions: {
+              series: {
+                pointWidth: 3,
+                minPointLength: 3 
+              }
+            },
+            plotOptions: {
+              series: {
+                events: { 
+                  // Disable clicking to show/hide series
+                  legendItemClick: function(e) {
+                    e.preventDefault();
+                  }
+                },
+              },
+            },
+            // Some dummy series are included to colour code the plot bands
+            series: [{name:'Plot of combined xyz readings', data:data[6], color: '#FFB17D'}, {name: 'Stationary', data:[], color: '#EBF0F2'}, {name: 'Light movement', data:[], color: '#47A9FF'}, {name: 'Large movement', data:[], color: '#FA1C0C'}]
+        });
+
+        var i;
+        for (i = 0; i < data[7].length; i++) {
+          var plotid = 'Stationary plot band '.concat(i.toString())
+          chart2.xAxis[0].addPlotBand({
+          from: data[7][i][0],
+          to: data[7][i][1],
+          color: '#EBF0F2',
+          id: plotid});
+        }
+        for (i = 0; i < data[8].length; i++) {
+          var plotid = 'Small move plot band '.concat(i.toString())
+          chart2.xAxis[0].addPlotBand({
+          from: data[8][i][0],
+          to: data[8][i][1],
+          color: '#47A9FF',
+          id: plotid});
+        }
+        for (i = 0; i < data[9].length; i++) {
+          var plotid = 'Big move plot band '.concat(i.toString())
+          chart2.xAxis[0].addPlotBand({
+          from: data[9][i][0],
+          to: data[9][i][1],
+          color: '#FA1C0C',
+          id: plotid});
+        }
+    });
+
+    </script>
+
+    <div style="margin-bottom: 200px">
+      
+    </div>
+
+
+
+
+
+
+  </body>
+</html>
+
+
