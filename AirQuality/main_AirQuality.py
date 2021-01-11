@@ -51,6 +51,7 @@ while True:
     try:
         # Reading data from USB
         data = []
+        ser.flushInput()
         for index in range(0,10):
             datum = ser.read()
             data.append(datum)
@@ -63,19 +64,41 @@ while True:
         pmten = int.from_bytes(b''.join(data[4:6]), byteorder='little') / 10
         print("PM10:")
         print(pmten)
+        # Current time
+        timeofreadings = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         
+        
+        # Reading from spreadsheet to calculate weighted moving average
+        
+        # Fetch previous values
+        wholespreadsheet = service.spreadsheets()
+        sheet1 = wholespreadsheet.values().get(spreadsheetId=spreadsheet_id, range='AirQuality!B2:C').execute()
+        airqualitydata = sheet1.get('values',[])
+        
+
+        # Calculate weighted moving average with 9 previous values
+        pm25data = [float(i[0]) for i in airqualitydata]
+        pm10data = [float(i[1]) for i in airqualitydata]
+        pm25av = pmtwofive*0.2 + 0.1*(pm25data[-1]+pm25data[-2]+pm25data[-3]+pm25data[-4]+pm25data[-5]+pm25data[-6]+pm25data[-7])+0.05*(pm25data[-8]+0.05*pm25data[-9])
+        pm10av = pmten*0.2 + 0.1*(pm10data[-1]+pm10data[-2]+pm10data[-3]+pm10data[-4]+pm10data[-5]+pm10data[-6]+pm10data[-7])+0.05*(pm10data[-8]+0.05*pm10data[-9])
+
+        
+        
+        
+
         #### Writing to spreadsheet
-        values = [[datetime.now().strftime("%d/%m/%Y %H:%M:%S"),pmtwofive, pmten]] #Information to be written to Sheets
+        values = [[timeofreadings,pmtwofive, pmten, pm25av, pm10av]] #Information to be written to Sheets
         body = {'values':values} # Used if there are more complex structures to be written
         # Uploading the data:
         result = service.spreadsheets().values().append(
         spreadsheetId=spreadsheet_id, range='AirQuality!A2',
         valueInputOption='USER_ENTERED', insertDataOption='INSERT_ROWS' , body=body).execute()
-                
+        print("Data written at {}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
+        print()
         
     except:
         print("An exception occurred at {0}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
         
-    time.sleep(60) # Take a reading once a minute
+    time.sleep(60) # Take a reading roughly once a minute
 
 
