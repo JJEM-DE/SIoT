@@ -20,7 +20,7 @@
 
     <div class="element">
       <h2> Air Quality </h2>
-      <p> Air quality measurements taken in my bedroom. The plot shows sampling once every 4 minutes for PM2.5 and PM10 particulates. These are both inhalable particles, with diameters around 2.5 micrometers (eg. combusion particles) and 10 micrometers (eg. dust, pollen) respectively.</p>
+      <p> Air quality measurements taken in my bedroom. The plot shows sampling once every 4 minutes for PM2.5 and PM10 particulates. These are both inhalable particles, with diameters around 2.5 micrometers (eg. combusion particles) and 10 micrometers (eg. dust, pollen) respectively. PM2.5 levels are considered low if below 35, and high if above 54. PM10 levels are considered low if below 50, and high if above 76.</p>
       <p class="instruction">Click and drag to zoom. Shift+click to pan.</p>
     </div>
 
@@ -72,7 +72,7 @@
 
     <div class="element" style="margin-top: 50px">
     <h2> Phone gyroscope </h2>
-    <p> XYZ gyroscope readings from my Android phone. Sampling is done every couple of seconds. The magnitude of the readings is calulated and then plotted. From this data basic activities are identified: </p>
+    <p> Gyroscope readings from my Android phone. Sampling is done every couple of seconds. The magnitude of the readings is calulated and then plotted. From this data basic activities are identified: </p>
     <ul>
       <li> Stationary (phone sitting on fixed surface)</li>
       <li> Light movement (phone either being used or in a pocket whilst sitting down)</li>
@@ -128,31 +128,31 @@
               },
             },
             // Some dummy series are included to colour code the plot bands
-            series: [{name:'Plot of combined xyz readings', data:data[6], color: '#FFB17D'}, {name: 'Stationary', data:[], color: '#EBF0F2'}, {name: 'Light movement', data:[], color: '#47A9FF'}, {name: 'Large movement', data:[], color: '#FA1C0C'}]
+            series: [{name:'Plot of combined xyz readings', data:data[2], color: '#FFB17D'}, {name: 'Stationary', data:[], color: '#EBF0F2'}, {name: 'Light movement', data:[], color: '#47A9FF'}, {name: 'Large movement', data:[], color: '#FA1C0C'}]
         });
 
         var i;
-        for (i = 0; i < data[7].length; i++) {
+        for (i = 0; i < data[3].length; i++) {
           var plotid = 'Stationary plot band '.concat(i.toString())
           chart2.xAxis[0].addPlotBand({
-          from: data[7][i][0],
-          to: data[7][i][1],
+          from: data[3][i][0],
+          to: data[3][i][1],
           color: '#EBF0F2',
           id: plotid});
         }
-        for (i = 0; i < data[8].length; i++) {
+        for (i = 0; i < data[4].length; i++) {
           var plotid = 'Small move plot band '.concat(i.toString())
           chart2.xAxis[0].addPlotBand({
-          from: data[8][i][0],
-          to: data[8][i][1],
+          from: data[4][i][0],
+          to: data[4][i][1],
           color: '#47A9FF',
           id: plotid});
         }
-        for (i = 0; i < data[9].length; i++) {
+        for (i = 0; i < data[5].length; i++) {
           var plotid = 'Big move plot band '.concat(i.toString())
           chart2.xAxis[0].addPlotBand({
-          from: data[9][i][0],
-          to: data[9][i][1],
+          from: data[5][i][0],
+          to: data[5][i][1],
           color: '#FA1C0C',
           id: plotid});
         }
