@@ -28,11 +28,10 @@ client_id = 'JoshPi'
 xvar = False
 yvar = False
 zvar = False
-noisebool = False
 x = 0
 y = 0
 z = 0
-noise = 0
+knowrows = False
 
 
 
@@ -85,8 +84,6 @@ def subscribe(client: mqtt_client):
         timestamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S") # Creating timestamp for the data
         # Collecting one of each piece of data before uploading all at once
         if msg.topic == "/JM/phone/Gyroscope/x":
-            print(timestamp)
-            print("Number of loops: {}".format(nloops))
             global x
             x = float(msg.payload.decode())
             global xvar
@@ -101,43 +98,55 @@ def subscribe(client: mqtt_client):
             z = float(msg.payload.decode())
             global zvar
             zvar = True
-        elif msg.topic == "/JM/phone/noise/decibels":
-            global noise
-            noise = float(msg.payload.decode())
-            global noisebool
-            noisebool = True
         # if all the data we want has been collected:
-        if xvar == True and yvar == True and zvar == True and noisebool == True:
+        if xvar == True and yvar == True and zvar == True:
             print("Gyroscope: ({:0.2f},{:0.2f},{:0.2f})".format(x,y,z))
             gyro = (x**2+y**2+z**2)**0.5
-            print("Noise level: {:0.2f}".format(noise))
             xvar = False
             yvar = False
             zvar = False
-            noisebool = False
             
             # Then upload to the spreadsheet. "Try, except" in case of network problems
             try:
                 ### Reading previous values from spreadsheet for moving average ###
+                                
+                # Work out how many rows are in the spreadsheet
+                global knowrows
+                if knowrows == False: # If we don't know how many rows are in the spreadsheet yet
+                    wholespreadsheet = service.spreadsheets()
+                    sheet2 = wholespreadsheet.values().get(spreadsheetId=spreadsheet_id, range='PhoneSensors!A2:A').execute()
+                    GyroValues = sheet2.get('values',[])
+                    global nrows
+                    nrows = len(GyroValues)
+                    knowrows = True
+                    
+                #Defining a small a range as possible to read to minimise latency                  
+                myreadrange = 'PhoneSensors!B' + str(nrows-2) + ':B' 
+                
                 print("Reading spreadsheet values")
                 wholespreadsheet = service.spreadsheets()
-                sheet2 = wholespreadsheet.values().get(spreadsheetId=spreadsheet_id, range='PhoneSensors!A:F').execute()
-                GyroValues = sheet2.get('values', [])
+                sheet2 = wholespreadsheet.values().get(spreadsheetId=spreadsheet_id, range=myreadrange).execute()
+                GyroValues = sheet2.get('values',[])
+              
+                
                 
                 #### Calculating average of current value and previous 4
                 sumof5 = gyro
                 for i in range(1, 5):
-                    sumof5 += float(GyroValues[-i][5])
-                average = float(sumof5)/float(5)               
+                    sumof5 += float(GyroValues[-i][0])
+                average = float(sumof5)/float(5)            
+                
+                
                 
                 #### Writing to spreadsheet
                 print("Writing to spreadsheet")
-                values = [[timestamp,noise,x,y,z,gyro,average]] #Information to be written to Sheets
+                values = [[timestamp,gyro,average]] #Information to be written to Sheets
                 body = {'values':values} # Used if there are more complex structures to be written
                 # Uploading the data:
                 result = service.spreadsheets().values().append(
                 spreadsheetId=spreadsheet_id, range='PhoneSensors!A2',
                 valueInputOption='USER_ENTERED', insertDataOption='INSERT_ROWS' , body=body).execute()
+                nrows += 1
                 print("Data written at {0}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
                 print()
         
@@ -159,7 +168,6 @@ def run():
     subscribe(client)
     client.loop_start()
 
-nloops = 0 # for debugging
 
 # Code which runs
 while True:
@@ -168,8 +176,6 @@ while True:
     # Connection is cut and restarted every 60s to avoid times where 
     # it has disconnected, reconnected and then not recieved anything
     client.loop_stop()
-    nloops += 1 # For debugging
-    print("looping")
 
 
 
