@@ -60,12 +60,12 @@ def index():
 
 	### Get and manipulate air quality data ###
 
-	sheet1 = sheet.values().get(spreadsheetId=spreadsheet_id, range='AirQuality!A2:C').execute()
+	sheet1 = sheet.values().get(spreadsheetId=spreadsheet_id, range='AirQuality!A2:E').execute()
 	values1 = sheet1.get('values', [])
 	#Seperate the columns of data
 	time = [i[0] for i in values1]
-	pm25 = [i[1] for i in values1]
-	pm10 = [i[2] for i in values1]
+	pm25 = [i[3] for i in values1] #Moving average value
+	pm10 = [i[4] for i in values1] #Moving average value
 	#Convert date string to useful datetime and "seconds since epoch" arrays
 	newtime = np.empty(len(time), dtype=object)
 	seconds = np.empty(len(time), dtype=object)
@@ -85,7 +85,7 @@ def index():
 	pm25tshort = []
 	pm10tshort = []
 	for i in range(len(seconds)):
-		if i%4 == 0:
+		if i%1 == 0: #was 4
 			pm25tshort.append(pm25t[i])
 			pm10tshort.append(pm10t[i])
 
@@ -93,16 +93,12 @@ def index():
 
 	### Get and manipulate gyroscope data ###
 
-	sheet2 = sheet.values().get(spreadsheetId=spreadsheet_id, range='PhoneSensors!A2:G').execute()
+	sheet2 = sheet.values().get(spreadsheetId=spreadsheet_id, range='PhoneSensors!A83523:C').execute()
 	values2 = sheet2.get('values', [])
 	#Seperate the columns of data
 	time2 = [i[0] for i in values2] # timestamps
-	noise = [i[1] for i in values2] # noise in dB
-	gyrox = [i[2] for i in values2]
-	gyroy = [i[3] for i in values2]
-	gyroz = [i[4] for i in values2]
-	gyro  = [i[5] for i in values2] # Magnitude of gyroscope readings
-	gyroAv= [i[6] for i in values2] # Moving average of gyroscope magnitudes
+	gyro  = [i[1] for i in values2] # Magnitude of gyroscope readings
+	gyroAv= [i[2] for i in values2] # Moving average of gyroscope magnitudes
 	#Convert date string to useful datetime and "seconds since epoch" arrays
 	newtime2 = np.empty(len(time2), dtype=object)
 	seconds2 = np.empty(len(time2), dtype=object)
@@ -110,27 +106,14 @@ def index():
 		newtime2[i] = datetime.strptime(time2[i], "%d/%m/%Y %H:%M:%S")
 		seconds2[i] = newtime2[i].timestamp()*1000 # Highcharts requires time in miliseconds
 	#Convert to numpy array so strings can be converted to floats
-	noise = np.array(noise).astype(np.float)
-	gyrox = np.array(gyrox).astype(np.float)
-	gyroy = np.array(gyroy).astype(np.float)
-	gyroz = np.array(gyroz).astype(np.float)
 	gyro  = np.array(gyro).astype(np.float)
 	gyroAv = np.array(gyroAv).astype(np.float)
 	# Create arrays ready to be plotted by highcharts in javascript
-	noiset = []
-	gyroxt = []
-	gyroyt = []
-	gyrozt = []
 	gyrot = []
 	gyroAvt = []
 	for i in range(len(seconds2)):
-		noiset.append([seconds2[i], noise[i]])
-		gyroxt.append([seconds2[i], gyrox[i]])
-		gyroyt.append([seconds2[i], gyroy[i]])
-		gyrozt.append([seconds2[i], gyroz[i]])
 		gyrot.append([seconds2[i], gyro[i]])
 		gyroAvt.append([seconds2[i], gyroAv[i]])
-
 
 
 	### Take gyroAvt and identify activites ###
@@ -151,7 +134,7 @@ def index():
 					currentActivity = "Stationary"
 				else:
 					stationary[-1][1] = datapoint[0]
-			elif datapoint[1] < 1.5: # If there's a small movement
+			elif datapoint[1] < 1: # If there's a small movement
 				if currentActivity != "Small Move":
 					smallMove.append([previous[0], datapoint[0]])
 					currentActivity = "Small Move"
@@ -167,14 +150,14 @@ def index():
 			currentActivity = "None"
 		first = False
 
-	# Remove small gaps 
+	# Remove small sections of stationary which generally correspond to smallMove
 	for pair in stationary:
 		if pair[1] - pair [0] <= 20000:
 			stationary.remove(pair)
 			smallMove.append(pair)
 
 
-	return render_template('index.html', data = [pm25tshort, pm10tshort, noiset, gyroxt, gyroyt, gyrozt, gyrot, stationary, smallMove, bigMove]) # "data" gets passed to the html file
+	return render_template('index.html', data = [pm25tshort, pm10tshort, gyrot, stationary, smallMove, bigMove]) # "data" gets passed to the html file
 
 
 
