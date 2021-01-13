@@ -1,5 +1,5 @@
 # SIoT
-Code repo for SIoT project at Imperial. Collecting and visualising air quality and phone grysocope data.
+Code repo for SIoT project at Imperial. Collecting and visualising air quality and phone gyroscope data.
 
 Folder contents:
 - AirQuality: Scripts for collecting data from an SDS100 Nova sensor by a Raspberry Pi and uploading it to Google Sheets
